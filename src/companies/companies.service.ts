@@ -111,7 +111,7 @@ export class CompaniesService {
     );
   }
 
-  async remove(id: string, @User() user: IUser) {
+  async remove(id: string, user: IUser) {
     // Cách 1 validate:
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return 'Not found company';

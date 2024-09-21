@@ -49,7 +49,7 @@ export class UsersService {
     }
 
     // hash
-    const hashPassword = this.getHashPassword(userDto.password);
+    const hashPassword = this.getHashPassword(password);
 
     // create
     let newUser = await this.userModel.create({
