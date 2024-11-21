@@ -9,6 +9,8 @@ import { SoftDeleteModel } from 'soft-delete-plugin-mongoose';
 import aqp from 'api-query-params';
 import mongoose from 'mongoose';
 import { UserDocument, User as UserModel } from 'src/users/schemas/user.schema';
+import { SkillsModule } from 'src/skills/skills.module';
+import { Skill, SkillDocument } from 'src/skills/schemas/skill.schema';
 
 @Injectable()
 export class JobsService {
@@ -18,11 +20,20 @@ export class JobsService {
 
     @InjectModel(UserModel.name)
     private userModel: SoftDeleteModel<UserDocument>,
+
+    @InjectModel(Skill.name)
+    private skillModel: SoftDeleteModel<SkillDocument>,
   ) { }
 
   async create(createJobDto: CreateJobDto, @User() userReq: IUser) {
+    const skills: string[] = await Promise.all(createJobDto.skills.map(async skill => {
+      const found = await this.skillModel.findById(skill);
+      return found.name;
+    }))
+
     let newJob = await this.jobModel.create({
       ...createJobDto,
+      skills,
       createdBy: {
         _id: userReq._id,
         email: userReq.email,
@@ -258,9 +269,8 @@ export class JobsService {
 
   async findJobsMatchingSkill(skill: any) {
     const jobMatchingSkills = await this.jobModel.find({
-      skills: { $in: skill },
+      skills: { $in: skill.name },
     });
-    console.log(jobMatchingSkills.length);
     return jobMatchingSkills.length;
   }
 

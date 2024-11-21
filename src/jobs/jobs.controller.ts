@@ -11,7 +11,7 @@ import {
 import { JobsService } from './jobs.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
-import { Public, ResponseMessage, User } from 'src/decorator/customize';
+import { Public, ResponseMessage, SkipCheckPermission, User } from 'src/decorator/customize';
 import { IUser } from 'src/users/users.interface';
 import { ApiTags } from '@nestjs/swagger';
 @ApiTags('jobs')
@@ -57,6 +57,7 @@ export class JobsController {
     return this.jobsService.findOne(id);
   }
 
+  @SkipCheckPermission()
   @Patch(':id')
   @ResponseMessage('Update a job by id')
   update(
