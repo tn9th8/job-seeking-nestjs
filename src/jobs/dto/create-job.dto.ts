@@ -23,7 +23,7 @@ export class CreateJobDto {
   @IsNotEmpty({ message: 'skills không được để trống' })
   @IsMongoId({ each: true, message: 'skills phải là mongo object id' })
   @IsArray({ message: 'skills có định dạng là array' })
-  skills: mongoose.Schema.Types.ObjectId[];
+  skills: mongoose.Schema.Types.ObjectId[] | string[];
 
   @IsNotEmpty({ message: 'company không được để trống' })
   @IsMongoId({ message: 'company có định dạng là mongo object id' })

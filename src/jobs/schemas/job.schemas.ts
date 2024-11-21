@@ -10,8 +10,10 @@ export class Job {
   @Prop()
   name: string;
 
-  @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: Skill.name })
-  skills: mongoose.Schema.Types.ObjectId[];
+  // @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: Skill.name })
+  // skills: mongoose.Schema.Types.ObjectId[];
+  @Prop({ type: [String], ref: Skill.name })
+  skills: string[];
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Company.name })
   company: mongoose.Schema.Types.ObjectId;

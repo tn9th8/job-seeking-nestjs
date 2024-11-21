@@ -12,7 +12,7 @@ import { SkillsService } from './skills.service';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { Public, ResponseMessage, User } from 'src/decorator/customize';
+import { Public, ResponseMessage, SkipCheckPermission, User } from 'src/decorator/customize';
 import { IUser } from 'src/users/users.interface';
 import { UpdatePermissionDto } from 'src/permissions/dto/update-permission.dto';
 import { GetSkillByNameDto } from './dto/get-skill-by-name.dto';
@@ -22,6 +22,7 @@ import { GetSkillByNameDto } from './dto/get-skill-by-name.dto';
 export class SkillsController {
   constructor(private readonly skillsService: SkillsService) {}
 
+  @SkipCheckPermission()
   @Post()
   @ResponseMessage('Create a new skill')
   create(@Body() createSkillDto: CreateSkillDto, @User() user: IUser) {
