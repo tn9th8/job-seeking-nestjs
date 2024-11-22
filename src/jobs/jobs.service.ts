@@ -1,16 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateJobDto } from './dto/create-job.dto';
-import { UpdateJobDto } from './dto/update-job.dto';
-import { User } from 'src/decorator/customize';
-import { IUser } from 'src/users/users.interface';
-import { Job, JobDocument } from './schemas/job.schemas';
 import { InjectModel } from '@nestjs/mongoose';
-import { SoftDeleteModel } from 'soft-delete-plugin-mongoose';
 import aqp from 'api-query-params';
 import mongoose from 'mongoose';
-import { UserDocument, User as UserModel } from 'src/users/schemas/user.schema';
-import { SkillsModule } from 'src/skills/skills.module';
+import { SoftDeleteModel } from 'soft-delete-plugin-mongoose';
+import { User } from 'src/decorator/customize';
 import { Skill, SkillDocument } from 'src/skills/schemas/skill.schema';
+import { UserDocument, User as UserModel } from 'src/users/schemas/user.schema';
+import { IUser } from 'src/users/users.interface';
+import { CreateJobDto } from './dto/create-job.dto';
+import { UpdateJobDto } from './dto/update-job.dto';
+import { Job, JobDocument } from './schemas/job.schemas';
 
 @Injectable()
 export class JobsService {
@@ -31,6 +30,10 @@ export class JobsService {
       return found.name;
     }))
 
+    const {startDate, endDate} = createJobDto;
+    if (startDate > endDate) 
+      throw new BadRequestException("startDate nên lớn hơn endDate")
+
     let newJob = await this.jobModel.create({
       ...createJobDto,
       skills,
@@ -42,12 +45,32 @@ export class JobsService {
     return newJob;
   }
 
+  async update(id: string, updateJobDto: UpdateJobDto, userReq: IUser) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new BadRequestException(`not found job with id=${id}`); // status: 200 => 400
+    }
+    const {startDate, endDate} = updateJobDto;
+    if (startDate > endDate) 
+      throw new BadRequestException("startDate nên lớn hơn endDate")
+    return await this.jobModel.updateOne(
+      { _id: id },
+      {
+        ...updateJobDto,
+        updatedBy: {
+          _id: userReq._id,
+          email: userReq.email,
+        },
+      },
+    );
+  }
+
   async findAll(
     currentPage: number,
     limit: number,
     qs: string,
     skills?: string[],
     company?: string,
+    locations?: string[],
   ) {
     // giải mã query string, chuẩn bị các biến phân trang
     let { filter, sort } = aqp(qs);
@@ -63,11 +86,22 @@ export class JobsService {
     const mongoose = require('mongoose');
     // chuẩn bị câu query tìm jobs mà matching với skills do client truyền
     let jobsMatchingSkills = {};
-    if (skills) {
+    if (skills && skills.length > 0) {
       const skillsObjId = skills.map((item: string) => {
         return new mongoose.Types.ObjectId(item);
       });
-      jobsMatchingSkills = { skills: { $in: skillsObjId } };
+
+      const skillsString = await Promise.all(skillsObjId.map(async (item: string) => {
+        const foundSkill = await this.skillModel.findById(item);
+        return foundSkill.name;
+      }));
+
+      jobsMatchingSkills = { skills: { $in: skillsString } };
+    }
+
+    let jobsMatchingLocations = {};
+    if (locations && locations.length > 0) {
+      jobsMatchingLocations = { location: {$in: locations} };
     }
     // chuẩn bị câu query tìm jobs mà matching với company do client truyền
     let jobsMatchingCompanies = {};
@@ -93,6 +127,7 @@ export class JobsService {
         // where query string, skills, company
         { $match: filter },
         { $match: jobsMatchingSkills },
+        { $match: jobsMatchingLocations},
         { $match: jobsMatchingCompanies },
         { $match: { isDeleted: false } },
         // select fields
@@ -116,6 +151,7 @@ export class JobsService {
             isDeleted: 1,
             deletedAt: 1,
             deletedBy: 1,
+            isActive: 1,
           },
         },
       ])
@@ -143,6 +179,7 @@ export class JobsService {
         // where query string, skills, company
         { $match: filter },
         { $match: jobsMatchingSkills },
+        { $match: jobsMatchingLocations},
         { $match: jobsMatchingCompanies },
         { $match: { isDeleted: false } },
         // select fields
@@ -166,6 +203,7 @@ export class JobsService {
             isDeleted: 1,
             deletedAt: 1,
             deletedBy: 1,
+            isActive: 1
           },
         },
       ])
@@ -195,21 +233,7 @@ export class JobsService {
       .populate({ path: 'company', select: { _id: 1, name: 1, logo: 1 } });
   }
 
-  async update(id: string, updateJobDto: UpdateJobDto, userReq: IUser) {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      throw new BadRequestException(`not found job with id=${id}`); // status: 200 => 400
-    }
-    return await this.jobModel.updateOne(
-      { _id: id },
-      {
-        ...updateJobDto,
-        updatedBy: {
-          _id: userReq._id,
-          email: userReq.email,
-        },
-      },
-    );
-  }
+
 
   async remove(_id: string, userReq: IUser) {
     // Cách 1 validate:
@@ -534,7 +558,7 @@ export class JobsService {
   async countJobsLevel(level: String) {
     let result = await this.jobModel.find({ level: { $eq: level } })
     return {
-      position: `Vị trí ${level}`,
+      position: `${level}`,
       value: (result).length
     }
   }

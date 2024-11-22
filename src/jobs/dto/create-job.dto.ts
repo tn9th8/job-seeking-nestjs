@@ -21,7 +21,7 @@ export class CreateJobDto {
   name: string;
 
   @IsNotEmpty({ message: 'skills không được để trống' })
-  @IsMongoId({ each: true, message: 'skills phải là mongo object id' })
+  // @IsMongoId({ each: true, message: 'skills phải là mongo object id' })
   @IsArray({ message: 'skills có định dạng là array' })
   skills: mongoose.Schema.Types.ObjectId[] | string[];
 
@@ -39,9 +39,11 @@ export class CreateJobDto {
   location: string;
 
   @IsNotEmpty({ message: 'Salary không được để trống' })
+  @Min(0) 
   salary: number;
 
   @IsNotEmpty({ message: 'Quantity không được để trống' })
+  @Min(0) 
   quantity: number;
 
   @IsNotEmpty({ message: 'Level không được để trống' })
@@ -53,7 +55,7 @@ export class CreateJobDto {
   @IsNotEmpty({ message: 'startDate không được để trống' })
   @Transform(({ value }) => new Date(value))
   @IsDate({ message: 'startDate có định dạng là Date' })
-  @MinDate(new Date(), {
+  @MinDate(new Date(new Date().setHours(0, 0, 0, 0)), {
     message: 'startDate không được nhỏ hơn ngày hiện tại',
   })
   startDate: Date;
@@ -61,7 +63,7 @@ export class CreateJobDto {
   @IsNotEmpty({ message: 'endDate không được để trống' })
   @Transform(({ value }) => new Date(value))
   @IsDate({ message: 'endDate có định dạng là Date' })
-  @MinDate(new Date(), {
+  @MinDate(new Date(new Date().setHours(0, 0, 0, 0)), {
     message: 'endDate không được nhỏ hơn ngày hiện tại',
   })
   endDate: Date;

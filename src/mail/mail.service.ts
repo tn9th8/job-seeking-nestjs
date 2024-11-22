@@ -33,11 +33,12 @@ export class MailService {
 
   async sendJobsToSubs() {
     // find all subcribers
-    const subscribers = await this.subscriberModel.find({});
+    const subscribers = await this.subscriberModel.find().populate([{path: 'user'}, {path: 'skills'}]);
     // send mail for each subcribers
     for (const subs of subscribers) {
       // find job có chứa subcribers's skills
-      const subsSkills = subs.skills;
+      const subsSkills = subs.skills.map(skill => (skill as any).name);
+      
       const jobWithMatchingSkills = await this.jobModel.find({
         skills: { $in: subsSkills },
       });
@@ -56,7 +57,7 @@ export class MailService {
         const user = await this.userModel.findById(subs.user);
         // gửi mail
         await this.mailerService.sendMail({
-          to: 'tn9th8@gmail.com',
+          to: (subs.user as any).email,
           from: '"Support Team" <support@example.com>', // override default from
           subject: 'Welcome to Nice App! Confirm your Email',
           template: 'new-job', // HTML body content

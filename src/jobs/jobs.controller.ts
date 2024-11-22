@@ -46,8 +46,9 @@ export class JobsController {
     @Query() qs: string,
     @Body('skills') skills?: string[],
     @Body('company') company?: string,
+    @Body('location') locations?: string[],
   ) {
-    return this.jobsService.findAll(+currentPage, +limit, qs, skills, company);
+    return this.jobsService.findAll(+currentPage, +limit, qs, skills, company, locations);
   }
 
   @Get(':id')

@@ -70,6 +70,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     if (targetEndpoint.startsWith('/api/v1/auth')) {
       isExist = true;
     }
+    if (targetEndpoint.startsWith('/api/v1/subscribers')) {
+      isExist = true;
+    }
     // temp
     if (targetEndpoint.includes('manager')) {
       isExist = true;
